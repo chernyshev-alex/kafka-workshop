@@ -1,4 +1,6 @@
-# Workshop : Automatic Shares Forecasting
+# Workshop : Automatic Stocks Forecasting  
+
+status : DRAFT
 
 ## Important links
 
@@ -36,60 +38,71 @@ Hello from Docker!
 ```
 
 ### Checkout workshop
-git clone <put URL here>
+git clone https://github.com/chernyshev-alex/kafka-workshop.git
 
 ## Start workshop
 
 -- start kafka in advance because we need kafka_default network
-cd kafka && ./start.sh
+``` cd kafka && ./start.sh ```
 
 ### Data
 
 In new shell 
+```
 cd prophet
 head -n 10 ../data/aapl.csv
 docker-compose build && docker-compose run package ipython apps/predict.py 365
 open ../data/forecast.png ../data/components.png
+```
 
 ### Prophet
 
+```
 cd prophet
 $ docker-compose build
 $ docker-compose up
-
+```
+Check API 
+```
 curl http://localhost:5000/predict/2017-01-01
+```
 
 ### Kafka
 in new shell 
+```
 $ cd kafka
 $ ./start.sh
 Wait until you get : ksql> Exiting KSQL.
+```
 
 in new shell start to send data to topic  stocks-csv 
+```
 $ ./send-file.sh 5 ../data/aapl.csv | docker-compose exec -T broker kafka-console-producer --broker-list broker:9092 -topic stocks-csv - 
+```
 
 ### KSQL 
-
+```
 docker-compose exec ksql-cli ksql http://ksql-server:8088
+```
 
 ksql> show topics;
-Q : read topic 'stocks' content  ?  A : print 'stocks' from beginning; 
-Q : read 4 records from stream ?  A : select * from stocks limit 4; 
-Q : Get all streams ? A : show streams; 
-Q : Which is format of stream PREDICTIONS ? A : AVRO
-Q : Get columns, types of stocks stream ? A : describe extended stocks;
-Q : What does CSAS_STOCKS_0 query ? A : transform CSV -> AVRO
-Q : select 4 records from stocks_predictions stream.    A : select * from stocks_predictions limit 4;
+1. Q : read topic 'stocks' content  ?  A : print 'stocks' from beginning; 
+2. Q : read 4 records from stream ?  A : select * from stocks limit 4; 
+3. Q : Get all streams ? A : show streams; 
+4. Q : Which is format of stream PREDICTIONS ? A : AVRO
+5. Q : Get columns, types of stocks stream ? A : describe extended stocks;
+6. Q : What does CSAS_STOCKS_0 query ? A : transform CSV -> AVRO
+7. Q : select 4 records from stocks_predictions stream.    A : select * from stocks_predictions limit 4;
 
-ksql> exit
+```ksql> exit```
 
 Q : Read raw data from topic predictions. 
 A  docker run -it --network=kafka_default edenhill/kafkacat:1.5.0 -C -c2 -b broker:29092 -t predictions -J
 
 ### Spark
 
-cd spark/streamapp && ./start.sh
-open  http://localhost:8080/  &  check application is running
+```cd spark/streamapp && ./start.sh
+open  http://localhost:8080/ ``` &  check application is running
 
 Q. Open KafkaStream.scala. Explain function from_confluent_avro(..)
 Open docker-compose.yml and check how to load integration kafka with structured spark streams
@@ -105,23 +118,27 @@ A: Pack columns to json struct and assign it to value part of kafka message
 ### ELK
 
 Q. How to read first 10 records from ELK ? A. http://localhost:9200/market/_search?pretty
+
 Q. How to check status KAFAK-ELK sink connector ? A. http://localhost:9200/elk/status
 
 ### Grafana
-
+```
 open http://localhost:3000  admin/admin -> skip
+```
 
 Configure ELK data source and dashboard :
 add data source -> name=ELK; type=ElasticSearch; URL=http://elasticsearch:9200
 index name=market; Time field name=DT
 
 Create dashboard :  Graph -> Last 5  years -> Refreshing query=5s
-Query 1 : TICKER=AAPL, Metric=Max; CLOSED
-Query 2 : TICKER=AAPL_P, Metric=Max; CLOSED
+1. Query 1 : TICKER=AAPL, Metric=Max; CLOSED
+2. Query 2 : TICKER=AAPL_P, Metric=Max; CLOSED
 
 ### Stop all
 
+```
 cd prophet && docker-compose down
 cd spark/streamapp && ./stop.sh
 cd kafka && ./stop.sh
+```
 
