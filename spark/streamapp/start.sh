@@ -13,7 +13,7 @@ docker build -f Dockerfile-spark -t workshop/spark:latest .
 echo -e "\n start spark"
 docker-compose up -d 
 
-# open "http://localhost:8080/"
+open "http://localhost:8080/"
 
 docker-compose logs -f
 

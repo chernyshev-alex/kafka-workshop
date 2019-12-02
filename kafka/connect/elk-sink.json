@@ -3,12 +3,12 @@
   "config": {
     "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
     "tasks.max": "1",
-    "topics": "stocks,vix,stocks-predictions",
+    "topics": "stocks,stocks-predictions",
     "connection.url": "http://elasticsearch:9200",
     "type.name": "tx",
     "key.ignore": true,
     "schemas.enable": false,
     "schema.ignore": true,
-    "topic.index.map": "stocks:market,vix:market,stocks-predictions:market"
+    "topic.index.map": "stocks:market,stocks-predictions:market"
   }
 }

@@ -14,11 +14,14 @@ import java.time.format._
 import requests._
 import ujson._
 
-// Model
+// === Model ====
+
 case class Quote(dt: String, ticker: String, var closed: Double)
 object Quote {
   def apply(r: Row): Quote = Quote(r.getAs[String]('DT.name), r.getAs[String]('TICKER.name), r.getAs[Double]('CLOSED.name))
 }
+
+//  end Model ===
 
 object KafkaStreamApp {
 
@@ -56,14 +59,24 @@ object KafkaStreamApp {
 
     val data = df.select(from_confluent_avro(col("value"), schemaRegistryConfig) as 'data).select("data.*")
 
-    //  Predictor rest API call
+    //  Workshop task ====================
+    // 
+    //  1. Handle response from predictor
+    //
+  
     val predictions = data map (row => {
 
       val quote = Quote(row)
       val nextDayQuote = nextDay(quote)
 
+      // call predictor 
       val response = requests.get(url_predictor + s"/predict/${nextDayQuote.dt}")
 
+      // Workshop :  Handle response 
+      // 
+      // nextDayQuote.closed = response.status==200 ? ujson.read(response.text).obj('CLOSED.name).num : 0.0
+      // return nextDayQuote
+      //
       nextDayQuote.closed = response.statusCode match {
         case 200 => ujson.read(response.text).obj('CLOSED.name).num
         case _   => 0.0
@@ -73,10 +86,12 @@ object KafkaStreamApp {
 
     predictions.createOrReplaceTempView("predictions")
 
+    // Workshop :  Can you explain this one ?
     val result = spark.sql("select * from predictions")
       .select(to_json(struct($"*"))
         .alias("value"))
 
+    //  write to kafka topic
     val stream = result.writeStream.format("kafka")
       .outputMode("append")
       .option("kafka.bootstrap.servers", brokers)
@@ -86,7 +101,6 @@ object KafkaStreamApp {
       .awaitTermination()
 
     // Use console to debug
-
     /*
     val stream = data
           .writeStream
