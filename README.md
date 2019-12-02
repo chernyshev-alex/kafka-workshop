@@ -101,7 +101,8 @@ A  docker run -it --network=kafka_default edenhill/kafkacat:1.5.0 -C -c2 -b brok
 
 ### Spark
 
-``` cd spark/streamapp && ./start.sh 
+``` 
+cd spark/streamapp && ./start.sh 
 open  http://localhost:8080/     check application is running
 ``` 
 
