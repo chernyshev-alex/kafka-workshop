@@ -2,6 +2,11 @@
 -- set 'cache.max.bytes.buffering'='10000000';
 -- set 'auto.offset.reset'='earliest';
 
+-- Design :
+-- 1. [csv-producer] -> topic:stock_csv -> stream:stocks -> ELK connect:elastic -> graphana
+-- 2. stream:stocks -> spark:stream-app -> propheat:predict  -> topic:predictions -> topic:stocks_predictions
+-- 3. topic:stocks_predictions -> ELK connect:elastic  -> graphana
+
 --  This stream reads from input CSV topic : stocks-csv
 
 CREATE STREAM stocks_csv(DT STRING, OPENED DOUBLE, HIHG DOUBLE, LOW DOUBLE, CLOSED DOUBLE, ADJ_CLOSED DOUBLE, VOLUME BIGINT) 
