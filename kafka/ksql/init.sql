@@ -2,10 +2,12 @@
 -- set 'cache.max.bytes.buffering'='10000000';
 -- set 'auto.offset.reset'='earliest';
 
--- System design :
+-- Pipeline design : ------
+--
 -- 1. [csv-producer] -> topic:stock_csv -> stream:stocks -> ELK connect:elastic -> graphana
 -- 2. stream:stocks -> spark:stream-app -> propheat:predict  -> topic:predictions -> topic:stocks_predictions
 -- 3. topic:stocks_predictions -> ELK connect:elastic  -> graphana
+----------
 
 --  This stream reads from input CSV topic : stocks-csv
 
@@ -17,30 +19,77 @@ CREATE STREAM stocks_csv(DT STRING, OPENED DOUBLE, HIHG DOUBLE, LOW DOUBLE, CLOS
 
 CREATE STREAM stocks WITH (kafka_topic='stocks', VALUE_FORMAT='avro', timestamp='DT', timestamp_format='yyy-MM-dd') AS
      SELECT DT, 'AAPL' AS TICKER, CLOSED FROM stocks_csv PARTITION BY TICKER;
- 
---  Spark app. writes predictions to this topic in JSON format
 
 CREATE STREAM predictions(DT STRING, TICKER STRING, CLOSED DOUBLE) 
      WITH (kafka_topic='predictions', VALUE_FORMAT='json', timestamp='DT', timestamp_format='yyy-MM-dd');
  
--- Workshop task --
--- This stream should deliver predictions in AVRO format to ELK connector.
--- Stream should read JSON data from the topic 'predictions'  and write data to the topic 'stocks-predictions' in AVRO
--- We have create stream 'stocks_predictions' and topic 'stocks-predictions' with given properties (format, key)
--- Add SELECT expression that reads data from stream 'predictions' 
--- Columns :  DT, TICKER + '_P', CLOSED 
--- CLOSED > 0.0
--- PARTITIONED BY TICKER
--- Check ELK connector consumed data with no errors and you can find them in ELK cluster under 'market' index
+-- TASK : KSQL --
 --
---  curl localhost:8083/connectors/elk/status    # Check connector status
---  curl localhost:9200/market/_search?pretty    # Find predicted data
+--  Introduction : 
+--
+--  Spark streaming application, writes predicted quotes to the topic 'predictions' in JSON format.
+--  We use ELK connector to deliver quotes to the elastic search cluster.
+--  ELK connector consumes records from topics in avro format only.
 --  
+--  What should be done :
+--  
+--  Create kafka STREAM 'predictions' that reads json quotes from the topic 'predictions' and writes them down
+--  to the topic 'stocks-predictions' in avro format.
+-- 
+--  input (predictions, json) : { DT : STRING, TICKER : STRING, CLOSED : DOUBLE }
+--  output (stocks_predictions, avro) :  { DT : STRING, TICKER : STRING, CLOSED : DOUBLE }
+--       add to output TICKER suffix '_P' and filter out quotes with CLOSED > 0.0
+--       records should be  partitioned by DT
+--       kafka system field timestamp='DT' and timestamp_format='yyy-MM-dd'
+--  
+--  Example :  
+--    input :  DT=2019-10-03, TICKER='AAPL', 122.99
+--    output : DT=2019-10-04, TICKER='AAPL_P', 123.22
+
+--  Implementation notes : 
+--  
+--  Learn cookbook how to convert data in stream from json to avro
+--  https://www.confluent.io/stream-processing-cookbook/
+--
+--  1. $ cd kafka && ./start.sh 
+--     start two ksql shells : $ ./ksql-run.sh  , in the new termial type again $> ./ksql-run.sh 
+--     Use one ksql shell (ksql1>) to develop stream and other (ksql2>) for debug
+--  3. develop your solution
+--     
+--     Use ksql(1) to develop your code :
+--     ksql(1)> CREATE STREAM stocks_predictions ....
+--     Check the created stream 'stocks_predictions' has properties 
+--     kafka_topic='stocks-predictions', VALUE_FORMAT='avro',  timestamp='DT', timestamp_format='yyy-MM-dd'
+
+--     ksql(1)> print 'predictions';   # start listen to topic
+--     Use ksql(2) to test your code : 
+--       ksql(2)> INSERT INTO PREDICTIONS(DT, TICKER, CLOSED) VALUES('2019-10-02', 'AAPL', 100.01);
+--       ksql(1)> Format:JSON
+--         {"ROWTIME":1576185462179,"ROWKEY":"null","DT":"2019-10-02","TICKER":"AAPL","CLOSED":100.01}
+--
+--       ** This is test to make sure that you implemented solution correctly **
+--       ksql(2)> print 'stocks-predictions';  # listen to target topic
+--       ksql(2)> INSERT INTO PREDICTIONS(DT, TICKER, CLOSED) VALUES('2019-10-02', 'AAPL', 100.01);
+--       ksql(1)> Format:AVRO
+--        10/2/19 12:00:00 AM UTC, AAPL_P, {"DT": "2019-10-02", "TICKER": "AAPL_P", "CLOSED": 100.01}
+--       
+--      Pay the attention, when your inserted data to the tream PREDICTIONS, you got data in correct AVRO format
+--         from topic 'stocks-predictions'. 
+--      You created stream and long running SQL correctly.
+--
+--      Notes : to drop stream use 
+--        ksql> terminate <query>; drop stream STOCKS_PREDICTIONS;
+--     
+--  5. check that ELK connector transmit inserted data to Elastic search 
+--      $ curl localhost:9200/market/_search?pretty   
+--  6. add your code to init.sql script instead of placeholder == YOUR SOLUTION IS HERE ==
+--      and restart kafka server $ ./stop.sh  $ ./start.sh
+--     You finished KSQL task and time to go to the spark streaming task !!
+--
+-- == YOUR SOLUTION IS HERE ==
 
 CREATE STREAM stocks_predictions WITH (kafka_topic='stocks-predictions', VALUE_FORMAT='avro', 
           timestamp='DT', timestamp_format='yyy-MM-dd') AS
-     -- ASK to write this statement 
      SELECT DT, CONCAT(TICKER, '_P') AS TICKER, CLOSED FROM predictions 
           WHERE CLOSED > 0.0
           PARTITION BY TICKER;
-     -- End ask to write this statement 
