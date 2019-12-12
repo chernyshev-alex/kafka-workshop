@@ -2,7 +2,7 @@
 -- set 'cache.max.bytes.buffering'='10000000';
 -- set 'auto.offset.reset'='earliest';
 
--- Design :
+-- System design :
 -- 1. [csv-producer] -> topic:stock_csv -> stream:stocks -> ELK connect:elastic -> graphana
 -- 2. stream:stocks -> spark:stream-app -> propheat:predict  -> topic:predictions -> topic:stocks_predictions
 -- 3. topic:stocks_predictions -> ELK connect:elastic  -> graphana

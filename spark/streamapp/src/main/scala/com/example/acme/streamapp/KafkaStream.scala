@@ -73,9 +73,6 @@ object KafkaStreamApp {
       val response = requests.get(url_predictor + s"/predict/${nextDayQuote.dt}")
 
       // Workshop :  Handle response 
-      // 
-      // nextDayQuote.closed = response.status==200 ? ujson.read(response.text).obj('CLOSED.name).num : 0.0
-      // return nextDayQuote
       //
       nextDayQuote.closed = response.statusCode match {
         case 200 => ujson.read(response.text).obj('CLOSED.name).num
