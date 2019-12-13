@@ -33,7 +33,7 @@ CREATE STREAM predictions(DT STRING, TICKER STRING, CLOSED DOUBLE)
 --  
 --  What should be done :
 --  
---  Create kafka STREAM 'predictions' that reads json quotes from the topic 'predictions' and writes them down
+--  Create kafka STREAM 'stocks_predictions' that reads json quotes from the topic 'predictions' and writes them down
 --  to the topic 'stocks-predictions' in avro format.
 -- 
 --  input (predictions, json) : { DT : STRING, TICKER : STRING, CLOSED : DOUBLE }
@@ -87,6 +87,8 @@ CREATE STREAM predictions(DT STRING, TICKER STRING, CLOSED DOUBLE)
 --     You finished KSQL task and time to go to the spark streaming task !!
 --
 -- == YOUR SOLUTION IS HERE ==
+-- Here is example of one possible soluton
+-- !!! Remove this before start workshop !!!
 
 CREATE STREAM stocks_predictions WITH (kafka_topic='stocks-predictions', VALUE_FORMAT='avro', 
           timestamp='DT', timestamp_format='yyy-MM-dd') AS
