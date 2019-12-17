@@ -89,7 +89,8 @@ object KafkaStreamApp {
     //        ....
     //
     //      Congratulations ! You finished Task 2. Here you integrated  kafka, spark and prophet. 
-    //      Go to Task 3 : http://localhost:3000 and configure grafana dashboard
+    //
+    //      Go to Task 3 : cd ./prophet/apps/flask-app.py
     //
 
     val predictions = data map (row => {

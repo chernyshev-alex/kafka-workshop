@@ -48,7 +48,7 @@ def predict(dt):
     if forecast is None:
         load_and_train_model(365)
     
-    ## Workshop ======================== 
+    ## Workshop ========================  
     #
     # Implement : SELECT * FROM forecast WHERE ds = @dt ;  dt in format 'yyyy-MM-dd'
     #
