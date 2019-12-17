@@ -40,51 +40,12 @@ Hello from Docker!
 ### Checkout workshop
 git clone https://github.com/chernyshev-alex/kafka-workshop.git
 
-## Start workshop
+Go to kafka/ksql/init.sql and follow instructions
 
--- start kafka in advance because we need kafka_default network
-``` cd kafka && ./start.sh ```
 
-### Data
-
-In new shell 
-```
-cd prophet
-head -n 10 ../data/aapl.csv
-docker-compose build && docker-compose run package ipython apps/predict.py 365
-open ../data/forecast.png ../data/components.png
-```
-
-### Prophet
+### Additional questions
 
 ```
-cd prophet
-$ docker-compose build
-$ docker-compose up
-```
-Check API 
-```
-curl http://localhost:5000/predict/2017-01-01
-```
-
-### Kafka
-in new shell 
-```
-$ cd kafka
-$ ./start.sh
-Wait until you get : ksql> Exiting KSQL.
-```
-
-in new shell start to send data to topic  stocks-csv 
-```
-$ ./send-file.sh 5 ../data/aapl.csv | docker-compose exec -T broker kafka-console-producer --broker-list broker:9092 -topic stocks-csv - 
-```
-
-### KSQL 
-```
-docker-compose exec ksql-cli ksql http://ksql-server:8088
-```
-
 ksql> show topics;
 1. Q : read topic 'stocks' content  ?  A : print 'stocks' from beginning; 
 2. Q : read 4 records from stream ?  A : select * from stocks limit 4; 
@@ -121,7 +82,7 @@ A: Pack columns to json struct and assign it to value part of kafka message
 
 Q. How to read first 10 records from ELK ? A. http://localhost:9200/market/_search?pretty
 
-Q. How to check status KAFAK-ELK sink connector ? A. http://localhost:9200/elk/status
+Q. How to check status KAFKA-ELK sink connector ? A. http://localhost:9200/elk/status
 
 ### Grafana
 ```
@@ -139,7 +100,7 @@ Create dashboard :  Graph -> Last 5  years -> Refreshing query=5s
 ### Stop all
 
 ```
-cd prophet && docker-compose down
+cd prophet && ./stop.sh
 cd spark/streamapp && ./stop.sh
 cd kafka && ./stop.sh
 ```
