@@ -48,19 +48,19 @@ def predict(dt):
     if forecast is None:
         load_and_train_model(365)
     
-    ## Workshop ========================  
+    ## Workshop  TASK 3  ========================  
     #
     # Implement : SELECT * FROM forecast WHERE ds = @dt ;  dt in format 'yyyy-MM-dd'
     #
 
     row = forecast[forecast['ds'] == dt]
 
+    # End workshop ======================
+
     if row.empty:  
         return '', 204   
 
     return row_to_json(row) 
-
-    # End workshop ======================
  
 if __name__ == '__main__':
     app.run(debug=True)
